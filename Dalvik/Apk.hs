@@ -9,15 +9,12 @@ import System.IO
 import Dalvik.Parser
 import Dalvik.Types
 
-lazyToStrictBS :: LBS.ByteString -> BS.ByteString
-lazyToStrictBS = BS.concat . LBS.toChunks
-
 loadDexFromApkIO :: FilePath -> IO (Either String DexFile)
 loadDexFromApkIO f = do
   chunks <- withArchive f (sourceEntry "classes.dex" consume)
   -- TODO: this is silly. Should we tweak the parser to work with
   -- lazy ByteStrings?
-  return . loadDex . BS.concat $ chunks
+  return . loadDex . LBS.concat .  Prelude.map LBS.fromStrict $ chunks
 
 loadDexFromAnyIO :: FilePath -> IO (Either String DexFile)
 loadDexFromAnyIO f = do

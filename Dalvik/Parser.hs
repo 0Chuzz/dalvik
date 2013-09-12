@@ -7,6 +7,7 @@ module Dalvik.Parser
 import Control.Applicative
 import Control.Monad
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Char8()
 import qualified Data.Map as Map
 import Data.Map (Map)
@@ -22,11 +23,11 @@ Based on documentation from:
 -}
 
 loadDexIO :: FilePath -> IO (Either String DexFile)
-loadDexIO f = loadDex <$> BS.readFile f
+loadDexIO f = loadDex <$> BSL.readFile f
 
-loadDex :: BS.ByteString -> Either String DexFile
+loadDex :: BSL.ByteString -> Either String DexFile
 loadDex bs = do
-  h <- runGet parseDexHeader bs
+  h <- runGetLazy parseDexHeader bs
   itemMap  <- doSection (dexMapOff h) 0 parseMap bs
   strings  <- doSection (dexOffStrings h) (dexNumStrings h) parseStrings bs
   types    <- doSection (dexOffTypes h) (dexNumTypes h) parseTypes bs
@@ -56,11 +57,11 @@ currDexOffset :: DexHeader -> Get Word32
 currDexOffset hdr =
   (dexFileLen hdr -) <$> (fromIntegral `fmap` remaining)
 
-doSection :: Word32 -> Word32 -> (BS.ByteString -> Word32 -> Get a)
-          -> BS.ByteString
+doSection :: Word32 -> Word32 -> (BSL.ByteString -> Word32 -> Get a)
+          -> BSL.ByteString
           -> Either String a
 doSection off size p bs =
-  runGet (p bs size) $ BS.drop (fromIntegral off) bs
+  runGetLazy (p bs size) $ BSL.drop (fromIntegral off) bs
 
 {- Header parsing -}
 
@@ -123,7 +124,7 @@ parseDexHeader = do
 
 {- Section parsing -}
 
-parseMap :: BS.ByteString -> Word32 -> Get (Map Word32 MapItem)
+parseMap :: BSL.ByteString -> Word32 -> Get (Map Word32 MapItem)
 parseMap _ _ = do
   size <- getWord32le
   items <- replicateM (fromIntegral size) parseMapItem
@@ -141,14 +142,14 @@ liftEither :: Either String a -> Get a
 liftEither (Left err) = fail err
 liftEither (Right a) = return a
 
-subGet :: Integral c => BS.ByteString -> c -> Get a -> Get a
-subGet bs off p = liftEither $ runGet p $ BS.drop (fromIntegral off) bs
+subGet :: Integral c => BSL.ByteString -> c -> Get a -> Get a
+subGet bs off p = liftEither $ runGetLazy p $ BSL.drop (fromIntegral off) bs
 
-subGet' :: Integral c => BS.ByteString -> c -> a -> Get a -> Get a
+subGet' :: Integral c => BSL.ByteString -> c -> a -> Get a -> Get a
 subGet' _ 0 def _ = return def
 subGet' bs off _ p = subGet bs off p
 
-parseStrings :: BS.ByteString -> Word32 -> Get (Map Word32 BS.ByteString)
+parseStrings :: BSL.ByteString -> Word32 -> Get (Map Word32 BS.ByteString)
 parseStrings bs size = do
   offs <- replicateM (fromIntegral size) getWord32le
   strs <- mapM (\off -> subGet bs off parseStringDataItem) offs
@@ -159,7 +160,7 @@ parseStringDataItem = getULEB128 >>=  const (BS.pack <$> go)
   where go = do c <- getWord8
                 if c == 0 then return [] else (c:) <$> go
 
-parseTypes :: BS.ByteString -> Word32 -> Get (Map TypeId StringId)
+parseTypes :: BSL.ByteString -> Word32 -> Get (Map TypeId StringId)
 parseTypes _ size =
   (Map.fromList . zip [0..]) <$> replicateM (fromIntegral size) getWord32le
 
@@ -168,12 +169,12 @@ parseTypeList = do
   size <- getWord32le
   replicateM (fromIntegral size) getWord16le
 
-parseProtos :: BS.ByteString -> Word32 -> Get (Map ProtoId Proto)
+parseProtos :: BSL.ByteString -> Word32 -> Get (Map ProtoId Proto)
 parseProtos bs size = do
   protos <- replicateM (fromIntegral size) (parseProto bs)
   return . Map.fromList . zip [0..] $ protos
 
-parseProto :: BS.ByteString -> Get Proto
+parseProto :: BSL.ByteString -> Get Proto
 parseProto bs = do
   tyDescId <- getWord32le
   retTyId <- getWord32le
@@ -186,7 +187,7 @@ parseProto bs = do
            , protoParams    = params
            }
 
-parseFields :: BS.ByteString -> Word32 -> Get (Map FieldId Field)
+parseFields :: BSL.ByteString -> Word32 -> Get (Map FieldId Field)
 parseFields _ size = do
   fields <- replicateM (fromIntegral size) parseField
   return . Map.fromList . zip [0..] $ fields
@@ -211,7 +212,7 @@ parseEncodedField mprev = do
            , fieldAccessFlags = accessFlags
            }
 
-parseMethods :: BS.ByteString -> Word32 -> Get (Map MethodId Method)
+parseMethods :: BSL.ByteString -> Word32 -> Get (Map MethodId Method)
 parseMethods _ size = do
   methods <- replicateM (fromIntegral size) parseMethod
   return . Map.fromList . zip [0..] $ methods
@@ -219,7 +220,7 @@ parseMethods _ size = do
 parseMethod :: Get Method
 parseMethod = Method <$> getWord16le <*> getWord16le <*> getWord32le
 
-parseEncodedMethods :: DexHeader -> BS.ByteString -> Word32 -> Maybe MethodId
+parseEncodedMethods :: DexHeader -> BSL.ByteString -> Word32 -> Maybe MethodId
                     -> Get [EncodedMethod]
 parseEncodedMethods _ _ 0 _ = return []
 parseEncodedMethods hdr bs n mprev = do
@@ -227,7 +228,7 @@ parseEncodedMethods hdr bs n mprev = do
   emeths <- parseEncodedMethods hdr bs (n - 1) (Just $ methId emeth)
   return $ emeth : emeths
 
-parseEncodedMethod :: DexHeader -> BS.ByteString -> Maybe MethodId
+parseEncodedMethod :: DexHeader -> BSL.ByteString -> Maybe MethodId
                    -> Get EncodedMethod
 parseEncodedMethod hdr bs mprev = do
   methIdxDiff <- fromIntegral <$> getULEB128 -- TODO: data loss?
@@ -241,7 +242,7 @@ parseEncodedMethod hdr bs mprev = do
            , methCode = codeItem
            }
 
-parseCodeItem :: DexHeader -> BS.ByteString -> Get CodeItem
+parseCodeItem :: DexHeader -> BSL.ByteString -> Get CodeItem
 parseCodeItem hdr bs = do
   regCount <- getWord16le
   inCount <- getWord16le
@@ -327,13 +328,13 @@ parseByteCode bc
       _ -> fail "internal: invalid debug byte code"
   | otherwise = return (SpecialAdjust bc)
 
-parseClassDefs :: DexHeader -> BS.ByteString -> Word32
+parseClassDefs :: DexHeader -> BSL.ByteString -> Word32
                -> Get (Map TypeId Class)
 parseClassDefs hdr bs size =
   Map.fromList . zip [0..] <$>
   replicateM (fromIntegral size) (parseClassDef hdr bs)
 
-parseClassDef :: DexHeader -> BS.ByteString -> Get Class
+parseClassDef :: DexHeader -> BSL.ByteString -> Get Class
 parseClassDef hdr bs = do
   classIdx        <- getWord32le
   accessFlags     <- getWord32le
@@ -363,7 +364,7 @@ parseClassDef hdr bs = do
            , classStaticValuesOff = staticValuesOff
            }
 
-parseClassData :: DexHeader -> BS.ByteString
+parseClassData :: DexHeader -> BSL.ByteString
                -> Get ( [EncodedField], [EncodedField]
                       , [EncodedMethod], [EncodedMethod] )
 parseClassData hdr bs = do
