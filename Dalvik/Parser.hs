@@ -60,8 +60,7 @@ loadDex bs = do
   return dex
 
 currDexOffset :: DexHeader -> Get Word32
-currDexOffset hdr =
-  (dexFileLen hdr -) <$> (fromIntegral `fmap` remaining)
+currDexOffset hdr = fromIntegral <$> bytesRead
 
 doSection :: Word32 -> Word32 -> (BSL.ByteString -> Word32 -> Get a)
           -> BSL.ByteString
@@ -78,7 +77,7 @@ parseDexHeader = do
   version <- getByteString 4
   unless (version == "035\0") $ fail "Unsupported version"
   checksum <- getWord32le
-  sha1 <- BS.unpack <$> getBytes 20
+  sha1 <- BS.unpack <$> getByteString 20
   fileLen <- getWord32le
   hdrLen <- getWord32le
   unless (hdrLen == 112) $ fail "Invalid header length"
@@ -260,7 +259,7 @@ parseCodeItem hdr bs = do
   insns <- replicateM (fromIntegral insnCount) getWord16le
   _ <- if tryCount > 0 && odd insnCount then getWord16le else return 0
   tryItems <- replicateM (fromIntegral tryCount) parseTryItem
-  r <- remaining
+  r <- bytesRead
   handlers <-
     if tryCount == 0 then return []
     else
@@ -284,14 +283,14 @@ parseTryItem = TryItem <$> getWord32le <*> getWord16le <*> getWord16le
 
 parseEncodedCatchHandler :: Int64 -> Get CatchHandler
 parseEncodedCatchHandler startRem = do
-  r <- remaining
+  r <- bytesRead
   handlerSize <- getSLEB128
   handlers <- replicateM (abs (fromIntegral handlerSize))
               parseEncodedTypeAddrPair
   catchAllAddr <- if handlerSize <= 0
                   then Just <$> getULEB128
                   else return Nothing
-  let off = fromIntegral $ startRem - r
+  let off = fromIntegral $ r - startRem
   return $ CatchHandler off handlers catchAllAddr
 
 parseEncodedTypeAddrPair :: Get (TypeId, Word32)
