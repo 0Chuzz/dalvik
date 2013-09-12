@@ -8,7 +8,7 @@ import Control.Applicative
 import Data.Bits
 import Data.Int
 import Data.Word
-import Data.Serialize.Get
+import Data.Binary.Get
 
 {- LEB128 decoding -}
 

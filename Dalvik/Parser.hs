@@ -11,7 +11,8 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Char8()
 import qualified Data.Map as Map
 import Data.Map (Map)
-import Data.Serialize.Get
+import Data.Binary.Get
+import GHC.Int (Int64)
 import Data.Word
 
 import Dalvik.LEB128
@@ -21,6 +22,11 @@ import Dalvik.Types
 Based on documentation from:
     http://netmite.com/android/mydroid/dalvik/docs/dex-format.htm
 -}
+
+runGetLazy :: Get a -> BSL.ByteString -> Either String a
+runGetLazy parser bs = case runGetOrFail parser bs of
+    (Left (_, _, error)) -> Left error
+    (Right (_, _, parsed)) -> Right parsed
 
 loadDexIO :: FilePath -> IO (Either String DexFile)
 loadDexIO f = loadDex <$> BSL.readFile f
@@ -276,7 +282,7 @@ parseCodeItem hdr bs = do
 parseTryItem :: Get TryItem
 parseTryItem = TryItem <$> getWord32le <*> getWord16le <*> getWord16le
 
-parseEncodedCatchHandler :: Int -> Get CatchHandler
+parseEncodedCatchHandler :: Int64 -> Get CatchHandler
 parseEncodedCatchHandler startRem = do
   r <- remaining
   handlerSize <- getSLEB128

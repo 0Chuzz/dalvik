@@ -20,15 +20,19 @@ import Data.ByteString.Lazy.Builder (Builder)
 import Data.Int
 import Data.List
 import Data.Monoid
-import Data.Serialize.Get ( runGet )
-import Data.Serialize.Put ( runPut, putWord32le, putWord64le )
-import Data.Serialize.IEEE754 ( getFloat32le, getFloat64le )
+import Data.Binary.Get ( runGetOrFail )
+import Data.Binary.Put ( runPut, putWord32le, putWord64le )
+import Data.Binary.IEEE754 ( getFloat32le, getFloat64le )
 import Data.String
 import Data.Word
 import Text.FShow.RealFloat
 
 import Dalvik.Instruction
 import Dalvik.Types
+
+runGet a b = case runGetOrFail a b of
+    (Left (_,_,str)) -> Left str
+    (Right (_, _, a)) -> Right a
 
 type Str = Builder
 
