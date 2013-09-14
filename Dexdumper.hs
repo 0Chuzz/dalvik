@@ -58,7 +58,7 @@ word20HexFixed w = bs +++ ws
   where bs = A.word8Hex . fromIntegral $ (w .&. 0x000F0000) `shiftR` 16
         ws = A.word16HexFixed . fromIntegral $ w .&. 0x0000FFFF
 
-hdrLines :: FilePath -> DexHeader -> IO ()
+hdrLines :: FilePath -> HeaderItem -> IO ()
 hdrLines f hdr = do
   pl [ "Opened "
      , squotes (B.string8 f)

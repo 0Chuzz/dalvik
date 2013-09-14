@@ -8,8 +8,8 @@ import Data.Word
 
 import Dalvik.AccessFlags
 
-data DexHeader =
-  DexHeader
+data HeaderItem =
+  HeaderItem
   { dexMagic        :: BS.ByteString
   , dexVersion      :: BS.ByteString
   , dexChecksum     :: Word32
@@ -136,7 +136,7 @@ data CodeItem
 
 data DexFile =
   DexFile
-  { dexHeader       :: DexHeader
+  { dexHeader       :: HeaderItem
   , dexMap          :: Map Word32 MapItem
   , dexStrings      :: Map StringId BS.ByteString
   , dexTypeNames    :: Map TypeId StringId

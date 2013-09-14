@@ -33,7 +33,7 @@ loadDexIO f = loadDex <$> BSL.readFile f
 
 loadDex :: BSL.ByteString -> Either String DexFile
 loadDex bs = do
-  h <- runGetLazy parseDexHeader bs
+  h <- runGetLazy parseHeaderItem bs
   itemMap  <- doSection (dexMapOff h) 0 parseMap bs
   strings  <- doSection (dexOffStrings h) (dexNumStrings h) parseStrings bs
   types    <- doSection (dexOffTypes h) (dexNumTypes h) parseTypes bs
@@ -59,7 +59,7 @@ loadDex bs = do
             }
   return dex
 
-currDexOffset :: DexHeader -> Get Word32
+currDexOffset :: HeaderItem -> Get Word32
 currDexOffset hdr = fromIntegral <$> bytesRead
 
 doSection :: Word32 -> Word32 -> (BSL.ByteString -> Word32 -> Get a)
@@ -70,8 +70,8 @@ doSection off size p bs =
 
 {- Header parsing -}
 
-parseDexHeader :: Get DexHeader
-parseDexHeader = do
+parseHeaderItem :: Get HeaderItem
+parseHeaderItem = do
   magic <- getByteString 4
   unless (magic == "dex\n") $ fail "Invalid magic string"
   version <- getByteString 4
@@ -101,7 +101,7 @@ parseDexHeader = do
   offClassDefs <- getWord32le
   dataSize <- getWord32le
   dataOff <- getWord32le
-  return DexHeader
+  return HeaderItem
            { dexMagic = magic
            , dexVersion = version
            , dexChecksum = checksum
@@ -225,7 +225,7 @@ parseMethods _ size = do
 parseMethod :: Get Method
 parseMethod = Method <$> getWord16le <*> getWord16le <*> getWord32le
 
-parseEncodedMethods :: DexHeader -> BSL.ByteString -> Word32 -> Maybe MethodId
+parseEncodedMethods :: HeaderItem -> BSL.ByteString -> Word32 -> Maybe MethodId
                     -> Get [EncodedMethod]
 parseEncodedMethods _ _ 0 _ = return []
 parseEncodedMethods hdr bs n mprev = do
@@ -233,7 +233,7 @@ parseEncodedMethods hdr bs n mprev = do
   emeths <- parseEncodedMethods hdr bs (n - 1) (Just $ methId emeth)
   return $ emeth : emeths
 
-parseEncodedMethod :: DexHeader -> BSL.ByteString -> Maybe MethodId
+parseEncodedMethod :: HeaderItem -> BSL.ByteString -> Maybe MethodId
                    -> Get EncodedMethod
 parseEncodedMethod hdr bs mprev = do
   methIdxDiff <- fromIntegral <$> getULEB128 -- TODO: data loss?
@@ -247,7 +247,7 @@ parseEncodedMethod hdr bs mprev = do
            , methCode = codeItem
            }
 
-parseCodeItem :: DexHeader -> BSL.ByteString -> Get CodeItem
+parseCodeItem :: HeaderItem -> BSL.ByteString -> Get CodeItem
 parseCodeItem hdr bs = do
   regCount <- getWord16le
   inCount <- getWord16le
@@ -333,13 +333,13 @@ parseByteCode bc
       _ -> fail "internal: invalid debug byte code"
   | otherwise = return (SpecialAdjust bc)
 
-parseClassDefs :: DexHeader -> BSL.ByteString -> Word32
+parseClassDefs :: HeaderItem -> BSL.ByteString -> Word32
                -> Get (Map TypeId Class)
 parseClassDefs hdr bs size =
   Map.fromList . zip [0..] <$>
   replicateM (fromIntegral size) (parseClassDef hdr bs)
 
-parseClassDef :: DexHeader -> BSL.ByteString -> Get Class
+parseClassDef :: HeaderItem -> BSL.ByteString -> Get Class
 parseClassDef hdr bs = do
   classIdx        <- getWord32le
   accessFlags     <- getWord32le
@@ -369,7 +369,7 @@ parseClassDef hdr bs = do
            , classStaticValuesOff = staticValuesOff
            }
 
-parseClassData :: DexHeader -> BSL.ByteString
+parseClassData :: HeaderItem -> BSL.ByteString
                -> Get ( [EncodedField], [EncodedField]
                       , [EncodedMethod], [EncodedMethod] )
 parseClassData hdr bs = do
