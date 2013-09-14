@@ -20,7 +20,7 @@ import Dalvik.Apk
 import Dalvik.DebugInfo
 import Dalvik.Instruction
 import Dalvik.Printer
-import Dalvik.Types
+import Dalvik.RawTypes
 
 processFile :: FilePath -> IO ()
 processFile f = do

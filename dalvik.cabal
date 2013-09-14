@@ -33,7 +33,7 @@ Library
                      Dalvik.LEB128
                      Dalvik.Parser
                      Dalvik.Printer
-                     Dalvik.Types
+                     Dalvik.RawTypes
     Other-Modules:
     GHC-Options: -Wall -O2
     GHC-Prof-Options: -prof -fprof-auto -fprof-cafs

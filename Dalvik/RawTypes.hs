@@ -1,4 +1,4 @@
-module Dalvik.Types where
+module Dalvik.RawTypes where
 
 import qualified Data.ByteString as BS
 import qualified Data.Map as Map

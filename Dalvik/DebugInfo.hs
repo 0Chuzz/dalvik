@@ -11,7 +11,7 @@ import qualified Data.Map as Map
 import Data.Word
 
 import Dalvik.AccessFlags
-import Dalvik.Types
+import Dalvik.RawTypes
 
 initialDebugState :: DebugInfo -> Int32 -> DebugState
 initialDebugState info srcFile =

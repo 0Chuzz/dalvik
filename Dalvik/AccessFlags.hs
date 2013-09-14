@@ -17,6 +17,7 @@ import Data.String
 import Data.Word
 import Text.Printf
 
+-- TODO: use Data.Flags
 type AccessFlags = Word32
 
 data AccessFlag

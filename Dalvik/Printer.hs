@@ -28,7 +28,7 @@ import Data.Word
 import Text.FShow.RealFloat
 
 import Dalvik.Instruction
-import Dalvik.Types
+import Dalvik.RawTypes
 
 runGet a b = case runGetOrFail a b of
     (Left (_,_,str)) -> Left str

@@ -16,7 +16,7 @@ import GHC.Int (Int64)
 import Data.Word
 
 import Dalvik.LEB128
-import Dalvik.Types
+import Dalvik.RawTypes
 
 {-
 Based on documentation from:

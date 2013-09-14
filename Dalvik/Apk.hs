@@ -5,7 +5,7 @@ import Data.Conduit.Binary
 import System.IO
 
 import Dalvik.Parser
-import Dalvik.Types
+import Dalvik.RawTypes
 
 loadDexFromApkIO :: FilePath -> IO (Either String DexFile)
 loadDexFromApkIO f = do
