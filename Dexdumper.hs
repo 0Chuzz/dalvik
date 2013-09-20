@@ -21,6 +21,7 @@ import Dalvik.DebugInfo
 import Dalvik.Instruction
 import Dalvik.Printer
 import Dalvik.RawTypes
+import Dalvik.Dex.Header
 
 processFile :: FilePath -> IO ()
 processFile f = do

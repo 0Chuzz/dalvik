@@ -7,33 +7,7 @@ import Data.Map (Map)
 import Data.Word
 
 import Dalvik.AccessFlags
-
-data HeaderItem =
-  HeaderItem
-  { dexMagic        :: BS.ByteString
-  , dexVersion      :: BS.ByteString
-  , dexChecksum     :: Word32
-  , dexSHA1         :: [Word8]
-  , dexFileLen      :: Word32
-  , dexHdrLen       :: Word32
-  , dexLinkSize     :: Word32
-  , dexLinkOff      :: Word32
-  , dexMapOff       :: Word32
-  , dexNumStrings   :: Word32
-  , dexOffStrings   :: Word32
-  , dexNumTypes     :: Word32
-  , dexOffTypes     :: Word32
-  , dexNumProtos    :: Word32
-  , dexOffProtos    :: Word32
-  , dexNumFields    :: Word32
-  , dexOffFields    :: Word32
-  , dexNumMethods   :: Word32
-  , dexOffMethods   :: Word32
-  , dexNumClassDefs :: Word32
-  , dexOffClassDefs :: Word32
-  , dexDataSize     :: Word32
-  , dexDataOff      :: Word32
-  } deriving (Show)
+import Dalvik.Dex.Header
 
 type ProtoId = Word16
 type ParamListId = Word32
