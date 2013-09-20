@@ -34,6 +34,7 @@ Library
                      Dalvik.Parser
                      Dalvik.Printer
                      Dalvik.RawTypes
+                     Dalvik.Types
     Other-Modules:
     GHC-Options: -Wall -O2
     GHC-Prof-Options: -prof -fprof-auto -fprof-cafs
