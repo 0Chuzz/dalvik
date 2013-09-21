@@ -8,7 +8,7 @@ import Data.Word
 
 import Dalvik.AccessFlags
 import Dalvik.Dex.Header
-import Dalvik.Dex.Maps
+import Dalvik.Dex.Map
 
 type ProtoId = Word16
 type ParamListId = Word32

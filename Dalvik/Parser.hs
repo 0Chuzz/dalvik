@@ -18,7 +18,7 @@ import Data.Word
 import Dalvik.LEB128
 import Dalvik.RawTypes
 import Dalvik.Dex.Header
-import Dalvik.Dex.Maps
+import Dalvik.Dex.Map
 
 {-
 Based on documentation from:
