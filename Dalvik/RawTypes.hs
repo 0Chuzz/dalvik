@@ -9,13 +9,12 @@ import Data.Word
 import Dalvik.AccessFlags
 import Dalvik.Dex.Header
 import Dalvik.Dex.Map
+import Dalvik.Dex.String
 
 type ProtoId = Word16
 type ParamListId = Word32
 type FieldId = Word16
 type MethodId = Word16
-type StringId = Word32
-type StringIdJumbo = Word32
 type TypeId = Word16
 
 type Word4 = Word8

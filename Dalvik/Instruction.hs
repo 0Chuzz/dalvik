@@ -26,6 +26,7 @@ import Data.Word
 import Text.Printf
 
 import Dalvik.RawTypes
+import Dalvik.Dex.String
 
 data Reg
   = R4 Reg4

@@ -1,4 +1,4 @@
-module Dalvik.Dex.Maps where
+module Dalvik.Dex.Map where
 
 import Data.Word
 import Data.Map

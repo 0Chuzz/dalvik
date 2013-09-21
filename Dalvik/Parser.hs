@@ -19,6 +19,7 @@ import Dalvik.LEB128
 import Dalvik.RawTypes
 import Dalvik.Dex.Header
 import Dalvik.Dex.Map
+import Dalvik.Dex.String
 
 {-
 Based on documentation from:
@@ -69,29 +70,6 @@ doSection :: Word32 -> Word32 -> (BSL.ByteString -> Word32 -> Get a)
           -> Either String a
 doSection off size p bs =
   runGetLazy (p bs size) $ BSL.drop (fromIntegral off) bs
-
-liftEither :: Either String a -> Get a
-liftEither (Left err) = fail err
-liftEither (Right a) = return a
-
-subGet :: Integral c => BSL.ByteString -> c -> Get a -> Get a
-subGet bs off p = liftEither $ runGetLazy p $ BSL.drop (fromIntegral off) bs
-
-subGet' :: Integral c => BSL.ByteString -> c -> a -> Get a -> Get a
-subGet' _ 0 def _ = return def
-subGet' bs off _ p = subGet bs off p
-
-parseStrings :: BSL.ByteString -> Word32 -> Get (Map Word32 BS.ByteString)
-parseStrings bs size = do
-  offs <- replicateM (fromIntegral size) getWord32le
-  strs <- mapM (\off -> subGet bs off parseStringDataItem) offs
-  return . Map.fromList . zip [0..] $ strs
-
-parseStringDataItem :: Get BS.ByteString
-parseStringDataItem = getULEB128 >>=  const (BS.pack <$> go)
-  where go = do c <- getWord8
-                if c == 0 then return [] else (c:) <$> go
-
 parseTypes :: BSL.ByteString -> Word32 -> Get (Map TypeId StringId)
 parseTypes _ size =
   (Map.fromList . zip [0..]) <$> replicateM (fromIntegral size) getWord32le
