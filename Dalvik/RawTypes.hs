@@ -8,6 +8,7 @@ import Data.Word
 
 import Dalvik.AccessFlags
 import Dalvik.Dex.Header
+import Dalvik.Dex.Maps
 
 type ProtoId = Word16
 type ParamListId = Word32
@@ -22,14 +23,6 @@ type Word4 = Word8
 type Reg4 = Word4
 type Reg8 = Word8
 type Reg16 = Word16
-
-
-data MapItem
-  = MapItem {
-      itemType :: Word16
-    , itemSize :: Word32
-    , itemOff  :: Word32
-    } deriving (Show)
 
 data Field
   = Field {

@@ -18,6 +18,7 @@ import Data.Word
 import Dalvik.LEB128
 import Dalvik.RawTypes
 import Dalvik.Dex.Header
+import Dalvik.Dex.Maps
 
 {-
 Based on documentation from:
@@ -68,22 +69,6 @@ doSection :: Word32 -> Word32 -> (BSL.ByteString -> Word32 -> Get a)
           -> Either String a
 doSection off size p bs =
   runGetLazy (p bs size) $ BSL.drop (fromIntegral off) bs
-
-{- Section parsing -}
-
-parseMap :: BSL.ByteString -> Word32 -> Get (Map Word32 MapItem)
-parseMap _ _ = do
-  size <- getWord32le
-  items <- replicateM (fromIntegral size) parseMapItem
-  return . Map.fromList . zip [0..] $ items
-
-parseMapItem :: Get MapItem
-parseMapItem = do
-  iType <- getWord16le
-  _unused <- getWord16le
-  iSize <- getWord32le
-  iOff <- getWord32le
-  return $ MapItem iType iSize iOff
 
 liftEither :: Either String a -> Get a
 liftEither (Left err) = fail err
